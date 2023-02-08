@@ -1,28 +1,39 @@
 import React from 'react';
 import { useEffect } from 'react';
-import { FaTrash } from 'react-icons/fa';
-import { useDispatch, useSelector } from 'react-redux';
-import addUserData from './Redux/thunk/user/addUserData';
-import deleteUser from './Redux/thunk/user/deleteUser';
-import loadUsersData from './Redux/thunk/user/fetchUsers';
+import { toast } from 'react-hot-toast';
+import { useAddUsersMutation } from '../app/features/api/apiSlice';
 
 const CreateUser = () => {
-    const dispatch = useDispatch();
-    const users = useSelector((state) => state.product.users);
-    useEffect(() => {
-        dispatch(loadUsersData());
-    }, [dispatch])
-    console.log(users)
+    const [postUser, { isLoading, isSuccess, isError }] = useAddUsersMutation();
+
     const handleCreateUser = (e) => {
         e.preventDefault();
         const name = e.target.name.value;
         const email = e.target.email.value;
-        const user = { name, email };
-        dispatch(addUserData(user))
+        const number = e.target.phone.value;
+        const userRole = e.target.userRole.value;
+        const userGender = e.target.userGender.value;
+        const user = { name, email, number, userRole, userGender };
+        try {
+            postUser(user);
+            e.target.reset();
+        } catch (error) {
+            console.log(e.message)
+        }
     }
+
+    useEffect(() => {
+        if (isLoading) {
+            toast.loading("Posting...", { id: "addUser" });
+        }
+        if (isSuccess) {
+            toast.success("User added", { id: "addUser" });
+
+        }
+    }, [isLoading, isSuccess])
     return (
-        <div className='min-h-screen bg-indigo-100 grid grid-cols-5 divide-x-2 divide-zinc-50'>
-            <div className='col-span-2'>
+        <div className='min-h-screen bg-indigo-100'>
+            <div className='w-96 mx-auto pt-5'>
                 <form onSubmit={handleCreateUser} className="card-body">
                     <div className="form-control">
                         <label className="label">
@@ -32,28 +43,36 @@ const CreateUser = () => {
                     </div>
                     <div className="form-control">
                         <label className="label">
+                            <span className="label-text">Phone number</span>
+                        </label>
+                        <input name='phone' required type="text" placeholder="user phone" className="input input-bordered" />
+                    </div>
+                    <div className="form-control">
+                        <label className="label">
                             <span className="label-text">Email</span>
                         </label>
                         <input name='email' required type="email" placeholder="email" className="input input-bordered" />
+                    </div>
+                    <div className='flex justify-start items-center gap-1'>
+                        <h1 className='font-semibold mr-3'>Role: </h1>
+                        <input type="radio" id='user' name="userRole" value="user" className="radio radio-info" checked />
+                        <label htmlFor="user">user</label>
+                        <input type="radio" id='seller' name="userRole" value="seller" className="radio radio-info ml-3" />
+                        <label htmlFor="seller">seller</label>
+                    </div>
+                    <div className='flex justify-start items-center gap-1'>
+                        <h1 className='font-semibold mr-3'>Gender: </h1>
+                        <input type="radio" id='female' name="userGender" value="female" className="radio radio-info" checked />
+                        <label htmlFor="female">female</label>
+                        <input type="radio" id='male' name="userGender" value="male" className="radio radio-info ml-3" />
+                        <label htmlFor="male">male</label>
                     </div>
                     <div className="form-control mt-6">
                         <button type='submit' className="btn btn-primary">Submit</button>
                     </div>
                 </form>
             </div>
-            <div className="col-span-3">
-                {
-                    users.map((user, i) => <div key={user._id} className='flex justify-between mx-2 border my-3 bg-slate-100 p-3'>
-                        <h2 className='font-bold text-green-600'>{user.name}</h2>
-                        <h5 className='font-semibold'>Email: {user.email}</h5>
-                        <h5 className='text-blue-400'>ID:{i}</h5>
-                        <button
-                            onClick={()=> dispatch(deleteUser(user._id))}
-                            className='btn btn-circle btn-sm btn-ghost'
-                        ><FaTrash></FaTrash></button>
-                    </div>)
-                }
-            </div>
+
         </div >
     );
 };
